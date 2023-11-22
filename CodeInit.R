@@ -1,6 +1,5 @@
 rm(list = ls())
 cat("\014")
-#library("data.table")
 library("tidyverse")
 library("googlesheets4")
 library("googledrive")
@@ -8,7 +7,8 @@ library("lubridate")
 
 # Google sheets authentification -----------------------------------------------
 options(gargle_oauth_cache = ".secrets")
-drive_auth(cache = ".secrets", email = "fernando.bastos@ufv.br")
+drive_auth(cache = ".secrets", email = "darah.moreira@ufv.br")
+#drive_auth(cache = ".secrets", email = "fernando.bastos@ufv.br")
 gs4_auth(token = drive_token())
 arq <- "https://docs.google.com/spreadsheets/d/12Eij3jGBKshx01hStY0odE7RXdzY-lWlI2X7_PQEp3A/edit?usp=sharing"
 df1 <- read_sheet(arq)
