@@ -34,6 +34,18 @@ names(df1) <- c("DataHora",
 df1 <- tidyr::separate(df1, DataHora, c("Data", "Hora"), sep = " ")
 names(df1) <- abjutils::rm_accent(names(df1))
 names(df1) <- str_to_upper(names(df1))
+<<<<<<< HEAD:CodeInit.R
+df1$DATA                  <- abjutils::rm_accent(df1$DATA                  ) 
+df1$HORA                  <- abjutils::rm_accent(df1$HORA                  ) 
+df1$RESIDENCIA            <- abjutils::rm_accent(df1$RESIDENCIA            ) 
+df1$ESTADO                <- abjutils::rm_accent(df1$ESTADO                )
+df1$PRIMEIRAVEZ           <- abjutils::rm_accent(df1$PRIMEIRAVEZ           ) 
+df1$FACILIDADE            <- abjutils::rm_accent(df1$FACILIDADE            ) 
+df1$CURSO                 <- abjutils::rm_accent(df1$CURSO                 ) 
+df1$ANOINICIO             <- abjutils::rm_accent(df1$ANOINICIO             )
+df1$SEMESTRE              <- abjutils::rm_accent(df1$SEMESTRE              ) 
+df1$ASSISTENCIA           <- abjutils::rm_accent(df1$ASSISTENCIA           ) 
+=======
 df1$DATA                  <- abjutils::rm_accent(df1$DATA                  )
 df1$HORA                  <- abjutils::rm_accent(df1$HORA                  ) 
 df1$RESIDENCIA            <- abjutils::rm_accent(df1$RESIDENCIA            )
@@ -44,10 +56,23 @@ df1$CURSO                 <- abjutils::rm_accent(df1$CURSO                 )
 df1$ANOINICIO             <- abjutils::rm_accent(df1$ANOINICIO             ) 
 df1$SEMESTRE              <- abjutils::rm_accent(df1$SEMESTRE              )
 df1$ASSISTENCIA           <- abjutils::rm_accent(df1$ASSISTENCIA           )
+>>>>>>> b50239179bb9265b4ef38696139ad9a2cede8e91:CodeInit2.R
 df1$IDADE                 <- abjutils::rm_accent(df1$IDADE                 ) 
 df1$HORASSONO             <- abjutils::rm_accent(df1$HORASSONO             )
 df1$ESTUDOANTECIPADO      <- abjutils::rm_accent(df1$ESTUDOANTECIPADO      ) 
 df1$HORASESTUDO           <- abjutils::rm_accent(df1$HORASESTUDO           ) 
+<<<<<<< HEAD:CodeInit.R
+df1$CREDITOS              <- abjutils::rm_accent(df1$CREDITOS              ) 
+df1$INTERESSEAREAACADEMICA<- abjutils::rm_accent(df1$INTERESSEAREAACADEMICA)
+df1$RESULTADOEST          <- abjutils::rm_accent(df1$RESULTADOEST)
+df1$CURSO                  <- str_to_upper(df1$CURSO                 )
+df1$PROVEDOR               <- str_to_upper(df1$PROVEDOR              )
+df1$RESIDENCIA             <- str_to_upper(df1$RESIDENCIA            )
+df1$ESTADO                 <- str_to_upper(df1$ESTADO                )
+df1$PRIMEIRAVEZ            <- str_to_upper(df1$PRIMEIRAVEZ           )
+df1$FACILIDADEEXATAS       <- str_to_upper(df1$FACILIDADEEXATAS      )
+df1$OPINIAOPERIODOSREMOTOS <- str_to_upper(df1$OPINIAOPERIODOSREMOTOS)
+=======
 df1$CREDITOS              <- abjutils::rm_accent(df1$CREDITOS              )
 df1$INTERESSEAREAACADEMICA<- abjutils::rm_accent(df1$INTERESSEAREAACADEMICA) 
 df1$RESULTADOEST          <- abjutils::rm_accent(df1$RESULTADOEST          ) 
@@ -68,6 +93,7 @@ df1$HORASESTUDO           <- str_to_upper(df1$HORASESTUDO           )
 df1$CREDITOS              <- str_to_upper(df1$CREDITOS              )
 df1$INTERESSEAREAACADEMICA<- str_to_upper(df1$INTERESSEAREAACADEMICA) 
 df1$RESULTADOEST          <- str_to_upper(df1$RESULTADOEST          )
+>>>>>>> b50239179bb9265b4ef38696139ad9a2cede8e91:CodeInit2.R
 df1$TURMA <- "MAF105T1"
 #-------------------------------------------------------------------------------
 ###Correcao da coluna CURSO
