@@ -214,3 +214,6 @@ df$SEMESTRE <- str_replace_all(df$SEMESTRE,fixed("3 período"),"3")
 df$SEMESTRE <- as.numeric(df$SEMESTRE)
 saveRDS(df, "censo.Rds")
 df <- readRDS("censo.Rds")
+
+
+#Teste Rstudio Cloud
