@@ -261,7 +261,21 @@ plot <- df %>%
 plot %>% plotly::ggplotly(tooltip = "text") %>% 
   plotly::layout(showlegend=FALSE)
 
+#Buscar uma resposta especifica
 
+busca <- df %>% filter(ANOINICIO==2023)
+busca <- data.frame(t(busca))
+busca$Var <- rownames(busca)
+busca <- busca %>% select(2,1)
+names(busca) <- c("Var","Resp")
+rownames(busca) <- NULL
+
+
+busca%>% 
+  addHtmlTableStyle(col.rgroup = c("none", "#F9FAF0"),
+                    col.columns = c("none", "#F1F0FA")) %>% 
+  htmlTable(total = TRUE, rnames = FALSE,
+            caption = "Tabela de Frequencia")
 
 ##########----------------------------------------------------------------------
 #####Distribuicao de Frequencia - SEMESTRE
@@ -354,6 +368,43 @@ tab1%>%
                     col.columns = c("none", "#F1F0FA")) %>% 
   htmlTable(total = TRUE, rnames = FALSE,
             caption = "Tabela de Frequencia")
+
+##########----------------------------------------------------------------------
+#####Grafico de setores 
+##########----------------------------------------------------------------------
+tab1 <- df %>% group_by(ASSISTENCIA) %>% summarise(Freq=n(), .groups = 'drop' )
+library(scales)
+pizza <- ggplot(tab1, aes(x="", y=Freq, fill=ASSISTENCIA))+
+  geom_bar(width = 1, stat = "identity")+
+  coord_polar("y")+ggtitle("Provedores Utilizados")
+
+pizza + scale_fill_brewer(palette="Dark2") +
+  theme(axis.text.x=element_blank()) +
+  geom_text(aes(y = Freq/2, 
+                label = Freq), data = tab1, size=5)
+
+###
+ni<-table(df$ASSISTENCIA) # Calcula a tabela de frequências absolutas e armazena o resultado em 'mytab'
+fi<-prop.table(ni) # Tabela de frequências relativas (f_i)
+p_fi<-100*prop.table(ni) # Porcentagem (100 f_i)
+
+# Adiciona linhas de total
+ni<-c(ni,sum(ni)) 
+fi<-c(fi,sum(fi))
+p_fi<-c(p_fi,sum(p_fi))
+names(ni)[3]<-"Total"
+df2<-cbind(ni,fi=round(fi,digits=2),p_fi=round(p_fi,digits=2))
+labs<-paste(1:3,"(",df2[1:3,1],";",round(df2[1:3,3],1),"%)",sep="")
+pie(table(df$ASSISTENCIA),labels=labs, main = "Gráfico em setores para Assistência Estudantil.",
+    sub = "Fonte: Censo EST 106")
+#title("Figura 2.3: Gráfico em setores para a variável Y: grau de instrução")
+legend(-1.1,-0.8,legend=c("1=Não, 2=Sim"),border=NA,box.col=NA)
+
+
+
+
+
+
 
 ##########----------------------------------------------------------------------
 #####Distribuicao de Frequencia - ESTUDOANTECIPADO
@@ -697,3 +748,47 @@ plot1 <- df %>% mutate(RESIDENCIA = fct_rev(RESIDENCIA)) %>% ggplot(aes(RESIDENC
   coord_flip()+ xlab("Cursos") + ylab("Nº de Estudantes")
 plotly::ggplotly(plot1, tooltip = "text") %>% 
   plotly::layout(showlegend=FALSE)
+
+teste <- df %>% 
+  group_by(CURSO,ASSISTENCIA) %>% 
+  summarise("quant"=n())
+teste
+
+ggplot(teste,aes(CURSO,quant,fill=ASSISTENCIA))+
+  geom_col() +
+  coord_flip() +
+  geom_text(aes(label=quant), position = position_stack(vjust = 1.2))
+
+ggplot(teste,aes(CURSO,quant,fill=ASSISTENCIA))+
+  geom_col(position = "dodge") +
+  coord_flip() +
+  geom_text(aes(label=quant),position = position_dodge(0.9),hjust = -1)
+
+
+library(geobr)
+brasil <- read_country(year = 2020)
+ggplot()+
+  geom_sf(data = brasil) 
+estados <- df %>%
+  group_by(ESTADO) %>% 
+  summarise(quant = n()) %>% 
+  filter(ESTADO!="BRASIL")
+
+brasil$name_state                <- abjutils::rm_accent(brasil$name_state                 )
+brasil$name_state                <- str_to_upper(brasil$name_state                 )
+
+dados_brasil <- brasil %>% left_join(estados,by=c("name_state"="ESTADO"))
+
+ggplot()+
+  geom_sf(data = dados_brasil,aes(fill=quant),color="grey") +
+  geom_sf_text(data=dados_brasil, aes(label=abbrev_state), size=2) +
+  scale_fill_gradient(low = "#b3e3c0", high = "#008000", name = "quantidade") +
+  labs(title = "Número de Estudantes por Estado", size=8) +
+  theme_minimal()+
+  theme(
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    legend.position="right",
+    plot.title=element_text(size=20, face="bold", hjust=0.5))
+
+  
