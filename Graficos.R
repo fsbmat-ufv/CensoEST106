@@ -8,8 +8,8 @@ library("lubridate")
 
 # Google sheets authentification -----------------------------------------------
 options(gargle_oauth_cache = ".secrets")
-#drive_auth(cache = ".secrets", email = "darah.moreira@ufv.br")
-drive_auth(cache = ".secrets", email = "fernando.bastos@ufv.br")
+drive_auth(cache = ".secrets", email = "darah.moreira@ufv.br")
+#drive_auth(cache = ".secrets", email = "fernando.bastos@ufv.br")
 gs4_auth(token = drive_token())
 arq <- "https://docs.google.com/spreadsheets/d/12Eij3jGBKshx01hStY0odE7RXdzY-lWlI2X7_PQEp3A/edit?usp=sharing"
 df <- read_sheet(arq)
@@ -143,6 +143,36 @@ tab1%>%
   htmlTable(total = TRUE, rnames = FALSE,
             caption = "Tabela de Frequencia")
 
+###Correcao da coluna ESTADO
+df <- df %>% mutate(ESTADO=ifelse(as.character(ESTADO)=="MG","MINAS GERAIS",as.character(ESTADO)))
+df <- df %>% mutate(ESTADO=ifelse(as.character(ESTADO)=="RJ","RIO DE JANEIRO",as.character(ESTADO)))
+
+#Tabela corrigida
+tab1 <- df %>% group_by(ESTADO) %>% summarise(Freq=n(), .groups = 'drop' )
+tab1$FreqR <- round(tab1$Freq/sum(tab1$Freq), digits = 2)
+tab1$FreqACM <- cumsum(tab1$Freq)
+tab1$FreqRACM <- cumsum(tab1$FreqR)
+Total <- c("Total", sum(tab1$Freq), sum(tab1$FreqR), "-", "-")
+tab1 <- rbind(tab1, Total)
+
+tab1%>% 
+  addHtmlTableStyle(col.rgroup = c("none", "#F9FAF0"),
+                    col.columns = c("none", "#F1F0FA")) %>% 
+  htmlTable(total = TRUE, rnames = FALSE,
+            caption = "Tabela de Frequencia")
+
+#Grafico------------------------------------------------------------------------
+plot1 <- df %>% group_by(ESTADO) %>% summarise(count=n(), .groups = 'drop') %>% 
+  ggplot(aes(reorder(ESTADO, count), text = paste("ESTADO: ", ESTADO, "<br>",
+                                                 "Número de estudantes: ", count), count, fill=ESTADO)) + geom_col(show.legend = F) + 
+  geom_text(aes(label = count), nudge_y = 1, size=5) + 
+  theme(axis.text.x = element_text(angle = 30, vjust = 1, hjust=1)) + 
+  ylab("Quantidade de Estudantes") + 
+  xlab("Estado") + 
+  ggtitle("Estado dos Estudantes")
+plotly::ggplotly(plot1, tooltip = "text") %>% 
+  plotly::layout(showlegend=FALSE)
+
 ##########----------------------------------------------------------------------
 #####Distribuicao de Frequencia - CURSO
 ##########----------------------------------------------------------------------
@@ -159,6 +189,43 @@ tab1%>%
   htmlTable(total = TRUE, rnames = FALSE,
             caption = "Tabela de Frequencia")
 
+###Correcao da coluna ESTADO
+df <- df %>% mutate(CURSO=ifelse(as.character(CURSO)=="CIENCIA ECONOMICAS","CIENCIAS ECONOMICAS",as.character(CURSO)))
+df <- df %>% mutate(CURSO=ifelse(as.character(CURSO)=="ECONOMIA","CIENCIAS ECONOMICAS",as.character(CURSO)))
+df <- df %>% mutate(CURSO=ifelse(as.character(CURSO)=="ENGENHARIA AGRICOLA AMBIETAL","ENGENHARIA AGRICOLA E AMBIENTAL",as.character(CURSO)))
+
+#Tabela Corrigida
+tab1 <- df %>% group_by(CURSO) %>% summarise(Freq=n(), .groups = 'drop' )
+tab1$FreqR <- round(tab1$Freq/sum(tab1$Freq), digits = 2)
+tab1$FreqACM <- cumsum(tab1$Freq)
+tab1$FreqRACM <- cumsum(tab1$FreqR)
+Total <- c("Total", sum(tab1$Freq), sum(tab1$FreqR), "-", "-")
+tab1 <- rbind(tab1, Total)
+
+tab1%>% 
+  addHtmlTableStyle(col.rgroup = c("none", "#F9FAF0"),
+                    col.columns = c("none", "#F1F0FA")) %>% 
+  htmlTable(total = TRUE, rnames = FALSE,
+            caption = "Tabela de Frequencia")
+
+#Grafico de barra
+# %>% ctrl+shift+m printa o comando piple
+plot <- df %>% 
+  group_by(CURSO) %>% 
+  summarise(count=n(), .groups = 'drop') %>% 
+  ggplot(aes(reorder(CURSO, count), 
+             text = paste("Curso: ", 
+                          CURSO, "<br>",
+                          "Número de estudantes: ", 
+                          count), 
+             count, 
+             fill=CURSO)) + 
+  geom_col(position = "dodge", show.legend = F) + 
+  geom_text(aes(label = count), nudge_y = 1, size=5) +
+  coord_flip() + xlab("Curso") + ylab("Nº de Estudantes")
+
+plot %>% plotly::ggplotly(tooltip = "text") %>% 
+  plotly::layout(showlegend=FALSE)
 ##########----------------------------------------------------------------------
 #####Distribuicao de Frequencia - ANOINICIO
 ##########----------------------------------------------------------------------
@@ -174,6 +241,26 @@ tab1%>%
                     col.columns = c("none", "#F1F0FA")) %>% 
   htmlTable(total = TRUE, rnames = FALSE,
             caption = "Tabela de Frequencia")
+
+#Grafico de barra
+# %>% ctrl+shift+m printa o comando piple
+plot <- df %>% 
+  group_by(ANOINICIO) %>% 
+  summarise(count=n(), .groups = 'drop') %>% 
+  ggplot(aes(reorder(ANOINICIO, count), 
+             text = paste("Anoinicio: ", 
+                          ANOINICIO, "<br>",
+                          "Número de estudantes: ", 
+                          count), 
+             count, 
+             fill=ANOINICIO)) + 
+  geom_col(position = "dodge", show.legend = F) + 
+  geom_text(aes(label = count), nudge_y = 1, size=5) +
+  coord_flip() + xlab("Ano") + ylab("Nº de Estudantes")
+
+plot %>% plotly::ggplotly(tooltip = "text") %>% 
+  plotly::layout(showlegend=FALSE)
+
 
 
 ##########----------------------------------------------------------------------
@@ -196,17 +283,246 @@ str(df$SEMESTRE)
 df$SEMESTRE <- as.numeric(as.character(df$SEMESTRE))
 df[is.na(df)] <- 0
 
+##########----------------------------------------------------------------------
+#####Distribuicao de Frequencia - IDADE
+##########----------------------------------------------------------------------
+tab1 <- df %>% group_by(IDADE) %>% summarise(Freq=n(), .groups = 'drop' )
+tab1$FreqR <- round(tab1$Freq/sum(tab1$Freq), digits = 2)
+tab1$FreqACM <- cumsum(tab1$Freq)
+tab1$FreqRACM <- cumsum(tab1$FreqR)
+Total <- c("Total", sum(tab1$Freq), sum(tab1$FreqR), "-", "-")
+tab1 <- rbind(tab1, Total)
+
+tab1%>% 
+  addHtmlTableStyle(col.rgroup = c("none", "#F9FAF0"),
+                    col.columns = c("none", "#F1F0FA")) %>% 
+  htmlTable(total = TRUE, rnames = FALSE,
+            caption = "Tabela de Frequencia")
+
+#Grafico
+plot1 <- df %>% group_by(IDADE) %>% summarise(count=n(), .groups = 'drop') %>% 
+  ggplot(aes(reorder(IDADE, count), text = paste("IDADE: ", IDADE, "<br>",
+                                                 "Número de estudantes: ", count), count, fill=IDADE)) + geom_col(show.legend = F) + 
+  geom_text(aes(label = count), nudge_y = 1, size=5) + 
+  #theme(axis.text.x = element_text(angle = 30, vjust = 1, hjust=1)) + 
+  ylab("Quantidade de Estudantes") + 
+  xlab("Idade") + 
+  ggtitle("Idade dos Estudantes")
+plotly::ggplotly(plot1, tooltip = "text") %>% 
+  plotly::layout(showlegend=FALSE)
+
+##########----------------------------------------------------------------------
+#####Distribuicao de Frequencia - HORASSONO
+##########----------------------------------------------------------------------
+tab1 <- df %>% group_by(HORASSONO) %>% summarise(Freq=n(), .groups = 'drop' )
+tab1$FreqR <- round(tab1$Freq/sum(tab1$Freq), digits = 2)
+tab1$FreqACM <- cumsum(tab1$Freq)
+tab1$FreqRACM <- cumsum(tab1$FreqR)
+Total <- c("Total", sum(tab1$Freq), sum(tab1$FreqR), "-", "-")
+tab1 <- rbind(tab1, Total)
+
+tab1%>% 
+  addHtmlTableStyle(col.rgroup = c("none", "#F9FAF0"),
+                    col.columns = c("none", "#F1F0FA")) %>% 
+  htmlTable(total = TRUE, rnames = FALSE,
+            caption = "Tabela de Frequencia")
+
+#Grafico
+plot1 <- df %>% group_by(HORASSONO) %>% summarise(count=n(), .groups = 'drop') %>% 
+  ggplot(aes(reorder(HORASSONO, count), text = paste("HORASSONO: ", HORASSONO, "<br>",
+                                                 "Número de estudantes: ", count), count, fill=HORASSONO)) + geom_col(show.legend = F) + 
+  geom_text(aes(label = count), nudge_y = 1, size=5) + 
+  #theme(axis.text.x = element_text(angle = 30, vjust = 1, hjust=1)) + 
+  ylab("Quantidade de Estudantes") + 
+  xlab("Horas") + 
+  ggtitle("Tempo de Sono")
+plotly::ggplotly(plot1, tooltip = "text") %>% 
+  plotly::layout(showlegend=FALSE)
+
+##########----------------------------------------------------------------------
+#####Distribuicao de Frequencia - ASSISTENCIA
+##########----------------------------------------------------------------------
+tab1 <- df %>% group_by(ASSISTENCIA) %>% summarise(Freq=n(), .groups = 'drop' )
+tab1$FreqR <- round(tab1$Freq/sum(tab1$Freq), digits = 2)
+tab1$FreqACM <- cumsum(tab1$Freq)
+tab1$FreqRACM <- cumsum(tab1$FreqR)
+Total <- c("Total", sum(tab1$Freq), sum(tab1$FreqR), "-", "-")
+tab1 <- rbind(tab1, Total)
+
+tab1%>% 
+  addHtmlTableStyle(col.rgroup = c("none", "#F9FAF0"),
+                    col.columns = c("none", "#F1F0FA")) %>% 
+  htmlTable(total = TRUE, rnames = FALSE,
+            caption = "Tabela de Frequencia")
+
+##########----------------------------------------------------------------------
+#####Distribuicao de Frequencia - ESTUDOANTECIPADO
+##########----------------------------------------------------------------------
+tab1 <- df %>% group_by(ESTUDOANTECIPADO) %>% summarise(Freq=n(), .groups = 'drop' )
+tab1$FreqR <- round(tab1$Freq/sum(tab1$Freq), digits = 2)
+tab1$FreqACM <- cumsum(tab1$Freq)
+tab1$FreqRACM <- cumsum(tab1$FreqR)
+Total <- c("Total", sum(tab1$Freq), sum(tab1$FreqR), "-", "-")
+tab1 <- rbind(tab1, Total)
+
+tab1%>% 
+  addHtmlTableStyle(col.rgroup = c("none", "#F9FAF0"),
+                    col.columns = c("none", "#F1F0FA")) %>% 
+  htmlTable(total = TRUE, rnames = FALSE,
+            caption = "Tabela de Frequencia")
+
+##########----------------------------------------------------------------------
+#####Distribuicao de Frequencia - HORASESTUDO
+##########----------------------------------------------------------------------
+tab1 <- df %>% group_by(HORASESTUDO) %>% summarise(Freq=n(), .groups = 'drop' )
+tab1$FreqR <- round(tab1$Freq/sum(tab1$Freq), digits = 2)
+tab1$FreqACM <- cumsum(tab1$Freq)
+tab1$FreqRACM <- cumsum(tab1$FreqR)
+Total <- c("Total", sum(tab1$Freq), sum(tab1$FreqR), "-", "-")
+tab1 <- rbind(tab1, Total)
+
+tab1%>% 
+  addHtmlTableStyle(col.rgroup = c("none", "#F9FAF0"),
+                    col.columns = c("none", "#F1F0FA")) %>% 
+  htmlTable(total = TRUE, rnames = FALSE,
+            caption = "Tabela de Frequencia")
+
+#Grafico
+plot1 <- df %>% group_by(HORASESTUDO) %>% summarise(count=n(), .groups = 'drop') %>% 
+  ggplot(aes(reorder(HORASESTUDO, count), text = paste("HORASESTUDO: ", HORASESTUDO, "<br>",
+                                                     "Número de estudantes: ", count), count, fill=HORASESTUDO)) + geom_col(show.legend = F) + 
+  geom_text(aes(label = count), nudge_y = 1, size=5) + 
+  #theme(axis.text.x = element_text(angle = 30, vjust = 1, hjust=1)) + 
+  ylab("Quantidade de Estudantes") + 
+  xlab("Horas") + 
+  ggtitle("Tempo de Estudo")
+plotly::ggplotly(plot1, tooltip = "text") %>% 
+  plotly::layout(showlegend=FALSE)
+
+##########----------------------------------------------------------------------
+#####Distribuicao de Frequencia - CREDITOS
+##########----------------------------------------------------------------------
+tab1 <- df %>% group_by(CREDITOS) %>% summarise(Freq=n(), .groups = 'drop' )
+tab1$FreqR <- round(tab1$Freq/sum(tab1$Freq), digits = 2)
+tab1$FreqACM <- cumsum(tab1$Freq)
+tab1$FreqRACM <- cumsum(tab1$FreqR)
+Total <- c("Total", sum(tab1$Freq), sum(tab1$FreqR), "-", "-")
+tab1 <- rbind(tab1, Total)
+
+tab1%>% 
+  addHtmlTableStyle(col.rgroup = c("none", "#F9FAF0"),
+                    col.columns = c("none", "#F1F0FA")) %>% 
+  htmlTable(total = TRUE, rnames = FALSE,
+            caption = "Tabela de Frequencia")
+
+#Grafico
+plot1 <- df %>% group_by(CREDITOS) %>% summarise(count=n(), .groups = 'drop') %>% 
+  ggplot(aes(reorder(CREDITOS, count), text = paste("CREDITOS: ", CREDITOS, "<br>",
+                                                       "Número de estudantes: ", count), count, fill=CREDITOS)) + geom_col(show.legend = F) + 
+  geom_text(aes(label = count), nudge_y = 1, size=5) + 
+  #theme(axis.text.x = element_text(angle = 30, vjust = 1, hjust=1)) + 
+  ylab("Quantidade de Estudantes") + 
+  xlab("Creditos") + 
+  ggtitle("Numero de creditos cursados pelos alunos")
+plotly::ggplotly(plot1, tooltip = "text") %>% 
+  plotly::layout(showlegend=FALSE)
+
+##########----------------------------------------------------------------------
+#####Distribuicao de Frequencia - INTERESSEAREAACADEMICA
+##########----------------------------------------------------------------------
+tab1 <- df %>% group_by(INTERESSEAREAACADEMICA) %>% summarise(Freq=n(), .groups = 'drop' )
+tab1$FreqR <- round(tab1$Freq/sum(tab1$Freq), digits = 2)
+tab1$FreqACM <- cumsum(tab1$Freq)
+tab1$FreqRACM <- cumsum(tab1$FreqR)
+Total <- c("Total", sum(tab1$Freq), sum(tab1$FreqR), "-", "-")
+tab1 <- rbind(tab1, Total)
+
+tab1%>% 
+  addHtmlTableStyle(col.rgroup = c("none", "#F9FAF0"),
+                    col.columns = c("none", "#F1F0FA")) %>% 
+  htmlTable(total = TRUE, rnames = FALSE,
+            caption = "Tabela de Frequencia")
+
+###Correcao da coluna INTERESSEAREAACADEMICA
+df <- df %>% mutate(INTERESSEAREAACADEMICA=ifelse(as.character(INTERESSEAREAACADEMICA)=="AINDA NAO","NAO",as.character(INTERESSEAREAACADEMICA)))
+df <- df %>% mutate(INTERESSEAREAACADEMICA=ifelse(as.character(INTERESSEAREAACADEMICA)=="DEPENDE","NAO SEI",as.character(INTERESSEAREAACADEMICA)))
+df <- df %>% mutate(INTERESSEAREAACADEMICA=ifelse(as.character(INTERESSEAREAACADEMICA)=="NAO SEI AINDA","NAO SEI",as.character(INTERESSEAREAACADEMICA)))
+df <- df %>% mutate(INTERESSEAREAACADEMICA=ifelse(as.character(INTERESSEAREAACADEMICA)=="TALVEZ","NAO SEI",as.character(INTERESSEAREAACADEMICA)))
+
+#Tabela Corrigida
+tab1 <- df %>% group_by(INTERESSEAREAACADEMICA) %>% summarise(Freq=n(), .groups = 'drop' )
+tab1$FreqR <- round(tab1$Freq/sum(tab1$Freq), digits = 2)
+tab1$FreqACM <- cumsum(tab1$Freq)
+tab1$FreqRACM <- cumsum(tab1$FreqR)
+Total <- c("Total", sum(tab1$Freq), sum(tab1$FreqR), "-", "-")
+tab1 <- rbind(tab1, Total)
+
+tab1%>% 
+  addHtmlTableStyle(col.rgroup = c("none", "#F9FAF0"),
+                    col.columns = c("none", "#F1F0FA")) %>% 
+  htmlTable(total = TRUE, rnames = FALSE,
+            caption = "Tabela de Frequencia")
+
+##########----------------------------------------------------------------------
+#####Distribuicao de Frequencia - RESULTADOEST
+##########----------------------------------------------------------------------
+tab1 <- df %>% group_by(RESULTADOEST) %>% summarise(Freq=n(), .groups = 'drop' )
+tab1$FreqR <- round(tab1$Freq/sum(tab1$Freq), digits = 2)
+tab1$FreqACM <- cumsum(tab1$Freq)
+tab1$FreqRACM <- cumsum(tab1$FreqR)
+Total <- c("Total", sum(tab1$Freq), sum(tab1$FreqR), "-", "-")
+tab1 <- rbind(tab1, Total)
+
+tab1%>% 
+  addHtmlTableStyle(col.rgroup = c("none", "#F9FAF0"),
+                    col.columns = c("none", "#F1F0FA")) %>% 
+  htmlTable(total = TRUE, rnames = FALSE,
+            caption = "Tabela de Frequencia")
+
+##########----------------------------------------------------------------------
+#####Distribuicao de Frequencia - SALARIOHOJE
+##########----------------------------------------------------------------------
+tab1 <- df %>% group_by(SALARIOHOJE) %>% summarise(Freq=n(), .groups = 'drop' )
+tab1$FreqR <- round(tab1$Freq/sum(tab1$Freq), digits = 2)
+tab1$FreqACM <- cumsum(tab1$Freq)
+tab1$FreqRACM <- cumsum(tab1$FreqR)
+Total <- c("Total", sum(tab1$Freq), sum(tab1$FreqR), "-", "-")
+tab1 <- rbind(tab1, Total)
+
+tab1%>% 
+  addHtmlTableStyle(col.rgroup = c("none", "#F9FAF0"),
+                    col.columns = c("none", "#F1F0FA")) %>% 
+  htmlTable(total = TRUE, rnames = FALSE,
+            caption = "Tabela de Frequencia")
+
+##########----------------------------------------------------------------------
+#####Distribuicao de Frequencia - SALARIOPOSFORMADO
+##########----------------------------------------------------------------------
+tab1 <- df %>% group_by(SALARIOPOSFORMADO) %>% summarise(Freq=n(), .groups = 'drop' )
+tab1$FreqR <- round(tab1$Freq/sum(tab1$Freq), digits = 2)
+tab1$FreqACM <- cumsum(tab1$Freq)
+tab1$FreqRACM <- cumsum(tab1$FreqR)
+Total <- c("Total", sum(tab1$Freq), sum(tab1$FreqR), "-", "-")
+tab1 <- rbind(tab1, Total)
+
+tab1%>% 
+  addHtmlTableStyle(col.rgroup = c("none", "#F9FAF0"),
+                    col.columns = c("none", "#F1F0FA")) %>% 
+  htmlTable(total = TRUE, rnames = FALSE,
+            caption = "Tabela de Frequencia")
+#-------------------------------------------------------------------------------
 
 
 
-df1 <- df %>% group_by(CURSO) %>% summarise(count=n(), .groups = 'drop' )
-barplot(height=df1$count, names=df1$CURSO, col="#69b3a2")
-barplot(height=df1$count, names=df1$CURSO, col="#69b3a2", horiz=T , las=1)
-barplot(height=df1$count, names=df1$CURSO, col="#69b3a2", horiz=T , las=1)
-df1Order <- df1[order(df1$count, decreasing=T),]
+
+df <- df %>% group_by(CURSO) %>% summarise(count=n(), .groups = 'drop' )
+barplot(height=df$count, names=df$CURSO, col="#69b3a2")
+barplot(height=df$count, names=df$CURSO, col="#69b3a2", horiz=T , las=1)
+barplot(height=df$count, names=df$CURSO, col="#69b3a2", horiz=T , las=1)
+dfOrder <- df[order(df$count, decreasing=T),]
 par(mar = c(5, 25, 5, 5))
-barplot(df1Order$count,
-        names.arg=df1Order$CURSO, 
+barplot(dfOrder$count,
+        names.arg=dfOrder$CURSO, 
         col="#69b3a2", 
         horiz=T , 
         las=1)
@@ -243,6 +559,7 @@ plot1 <- df %>% group_by(CURSO) %>% summarise(count=n(), .groups = 'drop') %>%
 plotly::ggplotly(plot1, tooltip = "text") %>% 
   plotly::layout(showlegend=FALSE)
 
+#########################################
 plot2 <- df %>% group_by(CURSO) %>% summarise(count=n(), .groups = 'drop') %>% 
   ggplot(aes(reorder(CURSO, count), text = paste("Curso: ", CURSO, "<br>",
                                                  "Número de estudantes: ", count), count, fill=CURSO)) + 
@@ -265,10 +582,10 @@ plotly::ggplotly(plot1, tooltip = "text") %>%
   plotly::layout(showlegend=FALSE)
 ###
 
-df1 <- df %>% group_by(PROVEDOR) %>% 
+df <- df %>% group_by(PROVEDOR) %>% 
   summarise(count=n(), .groups = 'drop')
-df1 <- df1 %>% mutate(Variavel="PROVEDOR")
-ggplot(df1, aes(x = Variavel, y = count, fill = PROVEDOR)) +
+df <- df %>% mutate(Variavel="PROVEDOR")
+ggplot(df, aes(x = Variavel, y = count, fill = PROVEDOR)) +
   geom_col() +
   coord_flip()+
   geom_text(aes(label = count),
@@ -281,12 +598,12 @@ ggplot(df1, aes(x = Variavel, y = count, fill = PROVEDOR)) +
   ggtitle("Gráfico de Barras Empilhadas")+
   theme(legend.position="bottom")
 ##
-df1 <- df %>% 
+df <- df %>% 
   group_by(PROVEDOR) %>% 
   summarise(frequencia = 100*(n()/140), .groups = 'drop')
-df1 <- df1 %>% mutate(Variavel="Provedor")
+df <- df %>% mutate(Variavel="Provedor")
 
-ggplot(df1, aes(x = Variavel, y = frequencia, fill = PROVEDOR)) +
+ggplot(df, aes(x = Variavel, y = frequencia, fill = PROVEDOR)) +
   geom_col() +
   coord_flip()+
   geom_text(aes(label = paste0(round(frequencia, digits = 2), "%")),
@@ -369,11 +686,11 @@ plot1 <- df %>% group_by(RESIDENCIA) %>% summarise(count=n(), .groups = 'drop') 
 plotly::ggplotly(plot1, tooltip = "text") %>% 
   plotly::layout(showlegend=FALSE)
 
-df1 <- df %>% group_by(RESIDENCIA) %>% summarise(count=n(), .groups = 'drop')
-#dfOrder <- arrange(df1, RESIDENCIA)
-dfOrder <- df1 %>% mutate(RESIDENCIA = fct_rev(RESIDENCIA))
+df <- df %>% group_by(RESIDENCIA) %>% summarise(count=n(), .groups = 'drop')
+#dfOrder <- arrange(df, RESIDENCIA)
+dfOrder <- df %>% mutate(RESIDENCIA = fct_rev(RESIDENCIA))
 
-plot1 <- df1 %>% mutate(RESIDENCIA = fct_rev(RESIDENCIA)) %>% ggplot(aes(RESIDENCIA, text = paste("Munícipio de Residência: ", RESIDENCIA, "<br>",
+plot1 <- df %>% mutate(RESIDENCIA = fct_rev(RESIDENCIA)) %>% ggplot(aes(RESIDENCIA, text = paste("Munícipio de Residência: ", RESIDENCIA, "<br>",
                                                                                                   "Número de estudantes: ", count), count, fill=RESIDENCIA)) + 
   geom_col(position = "dodge", show.legend = F) + 
   geom_text(aes(label = count), nudge_y = 1, size=5) +
